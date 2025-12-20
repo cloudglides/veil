@@ -1,0 +1,17 @@
+// src/index.ts
+async function getFingerprint() {
+  const data = [
+    navigator.userAgent,
+    screen.width,
+    screen.height,
+    Intl.DateTimeFormat().resolvedOptions().timeZone
+  ].join("|");
+  const hash = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(data)
+  );
+  return Array.from(new Uint8Array(hash)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+export {
+  getFingerprint
+};

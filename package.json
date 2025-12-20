@@ -1,0 +1,19 @@
+{
+  "name": "veil",
+  "version": "0.1.0",
+  "description": "Deterministic browser fingerprinting library",
+  "main": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "exports": "./dist/index.mjs",
+  "type": "module",
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "tsup": "^8.5.1",
+    "eslint": "^9.39.2",
+    "prettier": "^3.7.4"
+  }
+}
