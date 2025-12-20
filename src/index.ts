@@ -1,11 +1,16 @@
-import { FingerprintOptions } from "./types/index.ts";
-import { getUserAgentEntropy } from "./entropy/userAgent.ts";
-import { getCanvasEntropy } from "./entropy/canvas.ts";
-import { getWebGLEntropy } from "./entropy/webgl.ts";
-import { getFontsEntropy } from "./entropy/fonts.ts";
-import { getStorageEntropy } from "./entropy/storage.ts";
-import { getScreenEntropy } from "./entropy/screen.ts";
-import { murmurHash, entropyValue } from "./math/hash.ts";
+import { FingerprintOptions } from "./types";
+import { getUserAgentEntropy } from "./entropy/userAgent";
+import { getCanvasEntropy } from "./entropy/canvas";
+import { getWebGLEntropy } from "./entropy/webgl";
+import { getFontsEntropy } from "./entropy/fonts";
+import { getStorageEntropy } from "./entropy/storage";
+import { getScreenEntropy } from "./entropy/screen";
+import {
+  murmur_hash,
+  fnv_hash,
+  shannon_entropy,
+  kolmogorov_complexity,
+} from "../veil-core/pkg/veil_core.js";
 
 export async function getFingerprint(
   options?: FingerprintOptions,
@@ -43,13 +48,18 @@ export async function getFingerprint(
   }
 
   const dataStr = data.join("|");
-  const dataEntropy = entropyValue(data);
-  const mathHash = murmurHash(dataStr + dataEntropy.toString());
+  const shannon = shannon_entropy(dataStr);
+  const kolmogorov = kolmogorov_complexity(dataStr);
+  const murmur = murmur_hash(dataStr);
+  const fnv = fnv_hash(dataStr);
+
+  const mathMetrics = `${shannon}|${kolmogorov}|${murmur}|${fnv}`;
+  const combined = dataStr + "|" + mathMetrics;
 
   const algorithm = opts.hash === "sha512" ? "SHA-512" : "SHA-256";
   const hash = await crypto.subtle.digest(
     algorithm,
-    new TextEncoder().encode(dataStr + "|" + mathHash),
+    new TextEncoder().encode(combined),
   );
 
   return Array.from(new Uint8Array(hash))
@@ -57,4 +67,4 @@ export async function getFingerprint(
     .join("");
 }
 
-export type { FingerprintOptions } from "./types/index.ts";
+export type { FingerprintOptions } from "./types";

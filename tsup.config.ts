@@ -5,4 +5,6 @@ export default defineConfig({
   format: ["esm"],
   dts: true,
   clean: true,
+  shims: true,
+  outDir: "dist",
 });

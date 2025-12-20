@@ -1,4 +1,4 @@
-interface FingerprintOptions {
+export interface FingerprintOptions {
   entropy: {
     userAgent?: boolean;
     canvas?: boolean;
