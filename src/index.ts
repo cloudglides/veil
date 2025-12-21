@@ -10,12 +10,15 @@ import {
   fnv_hash,
   shannon_entropy,
   kolmogorov_complexity,
-} from "../veil-core/pkg/veil_core.js";
+} from "./veil_core.js";
 import * as normalize from "./normalize";
+import { initializeWasm } from "./wasm-loader";
 
 export async function getFingerprint(
   options?: FingerprintOptions,
 ): Promise<string> {
+  await initializeWasm();
+
   const opts = {
     entropy: {},
     hash: "sha256",
@@ -48,34 +51,21 @@ export async function getFingerprint(
     data.push(await getScreenEntropy());
   }
 
+  console.log(`userAgent: ${await getUserAgentEntropy()}`);
+  console.log(`canvas: ${await getCanvasEntropy()}`);
+  console.log(`webgl: ${await getWebGLEntropy()}`);
+  console.log(`fonts: ${await getFontsEntropy()}`);
+  console.log(`storage: ${await getStorageEntropy()}`);
+  console.log(`screen; ${await getStorageEntropy()}`);
+
   const dataStr = data.join("|");
   const shannon = shannon_entropy(dataStr);
   const kolmogorov = kolmogorov_complexity(dataStr);
   const murmur = murmur_hash(dataStr);
   const fnv = fnv_hash(dataStr);
 
-  const userAgentStr = await getUserAgentEntropy();
-  const screenStr = await getScreenEntropy();
-  const canvasStr = await getCanvasEntropy();
-  const storageStr = await getStorageEntropy();
-
-  const [screenDims, colorDepth] = screenStr.split("|");
-  const [width, height] = screenDims.split("x").map(Number);
-
-  const normalized = [
-    normalize.normalizeUserAgent(userAgentStr),
-    normalize.normalizeScreen(width, height),
-    normalize.normalizeFloat(shannon_entropy(dataStr), 2),
-    normalize.normalizeCanvas(canvasStr),
-    normalize.normalizeStorage(storageStr),
-    normalize.normalizeTimezone(
-      Intl.DateTimeFormat().resolvedOptions().timeZone,
-    ),
-  ];
-
   const mathMetrics = `${shannon}|${kolmogorov}|${murmur}|${fnv}`;
-  const normalizedStr = normalized.join("|");
-  const combined = normalizedStr + "|" + mathMetrics;
+  const combined = dataStr + "|" + mathMetrics;
 
   const algorithm = opts.hash === "sha512" ? "SHA-512" : "SHA-256";
   const hash = await crypto.subtle.digest(

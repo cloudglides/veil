@@ -2,14 +2,14 @@
   "name": "veil",
   "version": "0.1.0",
   "description": "Deterministic browser fingerprinting library",
-  "main": "./dist/index.mjs",
-  "types": "./dist/index.d.mts",
-  "exports": "./dist/index.mjs",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": "./dist/index.js",
   "type": "module",
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "build:wasm": "wasm-pack build veil-core --target nodejs",
+    "build:wasm": "wasm-pack build veil-core --target web",
     "test": "vitest",
     "test:ui": "vitest --ui"
   },
