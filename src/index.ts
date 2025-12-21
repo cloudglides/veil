@@ -11,6 +11,7 @@ import {
   shannon_entropy,
   kolmogorov_complexity,
 } from "../veil-core/pkg/veil_core.js";
+import * as normalize from "./normalize";
 
 export async function getFingerprint(
   options?: FingerprintOptions,
@@ -53,8 +54,28 @@ export async function getFingerprint(
   const murmur = murmur_hash(dataStr);
   const fnv = fnv_hash(dataStr);
 
+  const userAgentStr = await getUserAgentEntropy();
+  const screenStr = await getScreenEntropy();
+  const canvasStr = await getCanvasEntropy();
+  const storageStr = await getStorageEntropy();
+
+  const [screenDims, colorDepth] = screenStr.split("|");
+  const [width, height] = screenDims.split("x").map(Number);
+
+  const normalized = [
+    normalize.normalizeUserAgent(userAgentStr),
+    normalize.normalizeScreen(width, height),
+    normalize.normalizeFloat(shannon_entropy(dataStr), 2),
+    normalize.normalizeCanvas(canvasStr),
+    normalize.normalizeStorage(storageStr),
+    normalize.normalizeTimezone(
+      Intl.DateTimeFormat().resolvedOptions().timeZone,
+    ),
+  ];
+
   const mathMetrics = `${shannon}|${kolmogorov}|${murmur}|${fnv}`;
-  const combined = dataStr + "|" + mathMetrics;
+  const normalizedStr = normalized.join("|");
+  const combined = normalizedStr + "|" + mathMetrics;
 
   const algorithm = opts.hash === "sha512" ? "SHA-512" : "SHA-256";
   const hash = await crypto.subtle.digest(

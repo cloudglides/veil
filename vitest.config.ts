@@ -5,7 +5,7 @@ import topLevelAwait from "vite-plugin-top-level-await";
 export default defineConfig({
   plugins: [wasm(), topLevelAwait()],
   test: {
-    environment: "jsdom",
+    environment: "happy-dom",
     globals: true,
     exclude: ["node_modules", "dist", ".direnv"],
   },
