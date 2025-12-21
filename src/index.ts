@@ -5,6 +5,28 @@ import { getWebGLEntropy } from "./entropy/webgl";
 import { getFontsEntropy } from "./entropy/fonts";
 import { getStorageEntropy } from "./entropy/storage";
 import { getScreenEntropy } from "./entropy/screen";
+import { getDistributionEntropy } from "./entropy/distribution";
+import { getComplexityEntropy } from "./entropy/complexity";
+import { getSpectralEntropy } from "./entropy/spectral";
+import { getApproximateEntropy } from "./entropy/approximate";
+import { getOSEntropy } from "./entropy/os";
+import { getLanguageEntropy } from "./entropy/language";
+import { getTimezoneEntropy } from "./entropy/timezone";
+import { getHardwareEntropy } from "./entropy/hardware";
+import { getPluginsEntropy } from "./entropy/plugins";
+import { getBrowserEntropy } from "./entropy/browser";
+import { getOSVersionEntropy } from "./entropy/osVersion";
+import { getScreenInfoEntropy } from "./entropy/screenInfo";
+import { getAdblockEntropy } from "./entropy/adblock";
+import { getWebFeaturesEntropy } from "./entropy/webFeatures";
+import { getPreferencesEntropy } from "./entropy/preferences";
+import { getConnectionEntropy } from "./entropy/connection";
+import { getAudioEntropy } from "./entropy/audio";
+import { getBatteryEntropy } from "./entropy/battery";
+import { getPermissionsEntropy } from "./entropy/permissions";
+import { getPerformanceEntropy } from "./entropy/performance";
+import { getStatisticalEntropy } from "./entropy/statistical";
+import { getProbabilisticEntropy } from "./entropy/probabilistic";
 import {
   murmur_hash,
   fnv_hash,
@@ -51,12 +73,28 @@ export async function getFingerprint(
     data.push(await getScreenEntropy());
   }
 
-  console.log(`userAgent: ${await getUserAgentEntropy()}`);
-  console.log(`canvas: ${await getCanvasEntropy()}`);
-  console.log(`webgl: ${await getWebGLEntropy()}`);
-  console.log(`fonts: ${await getFontsEntropy()}`);
-  console.log(`storage: ${await getStorageEntropy()}`);
-  console.log(`screen; ${await getStorageEntropy()}`);
+  data.push(await getDistributionEntropy());
+  data.push(await getComplexityEntropy());
+  data.push(await getSpectralEntropy());
+  data.push(await getApproximateEntropy());
+  data.push(await getOSEntropy());
+  data.push(await getLanguageEntropy());
+  data.push(await getTimezoneEntropy());
+  data.push(await getHardwareEntropy());
+  data.push(await getPluginsEntropy());
+  data.push(await getBrowserEntropy());
+  data.push(await getOSVersionEntropy());
+  data.push(await getScreenInfoEntropy());
+  data.push(await getAdblockEntropy());
+  data.push(await getWebFeaturesEntropy());
+  data.push(await getPreferencesEntropy());
+  data.push(await getConnectionEntropy());
+  data.push(await getAudioEntropy());
+  data.push(await getBatteryEntropy());
+  data.push(await getPermissionsEntropy());
+  data.push(await getPerformanceEntropy());
+  data.push(await getStatisticalEntropy());
+  data.push(await getProbabilisticEntropy());
 
   const dataStr = data.join("|");
   const shannon = shannon_entropy(dataStr);

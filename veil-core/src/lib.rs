@@ -2,6 +2,8 @@ use std::usize;
 
 use wasm_bindgen::prelude::*;
 
+mod entropy;
+
 const MURMUR_SEED: u32 = 0x811c9dc5;
 const FNV_PRIME: u32 = 16777619;
 const FNV_OFFSET_BASIS: u32 = 2166136261;
@@ -60,4 +62,29 @@ pub fn kolmogorov_complexity(s: &str) -> f64 {
         }
     }
     (len as f64) + (len as f64 * (runs as f64 / len as f64))
+}
+
+#[wasm_bindgen]
+pub fn ks_test(values: &[f64]) -> f64 {
+    entropy::kolmogorov_smirnov(values)
+}
+
+#[wasm_bindgen]
+pub fn lz_complexity(data: &[u8]) -> usize {
+    entropy::lempel_ziv_complexity(data)
+}
+
+#[wasm_bindgen]
+pub fn spectral(samples: &[f64]) -> f64 {
+    entropy::spectral_entropy(samples)
+}
+
+#[wasm_bindgen]
+pub fn approx_entropy(samples: &[f64], m: usize) -> f64 {
+    entropy::approximate_entropy(samples, m)
+}
+
+#[wasm_bindgen]
+pub fn sample_ent(samples: &[f64], m: usize, r: f64) -> f64 {
+    entropy::sample_entropy(samples, m, r)
 }
