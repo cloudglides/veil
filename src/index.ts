@@ -1,4 +1,4 @@
-import { FingerprintOptions } from "./types";
+import type { FingerprintOptions, FingerprintResponse, SourceMetric } from "./types";
 import { getUserAgentEntropy } from "./entropy/userAgent";
 import { getCanvasEntropy } from "./entropy/canvas";
 import { getWebGLEntropy } from "./entropy/webgl";
@@ -20,11 +20,7 @@ import { getScreenInfoEntropy } from "./entropy/screenInfo";
 import { getAdblockEntropy } from "./entropy/adblock";
 import { getWebFeaturesEntropy } from "./entropy/webFeatures";
 import { getPreferencesEntropy } from "./entropy/preferences";
-import { getConnectionEntropy } from "./entropy/connection";
-import { getAudioEntropy } from "./entropy/audio";
-import { getBatteryEntropy } from "./entropy/battery";
 import { getPermissionsEntropy } from "./entropy/permissions";
-import { getPerformanceEntropy } from "./entropy/performance";
 import { getStatisticalEntropy } from "./entropy/statistical";
 import { getProbabilisticEntropy } from "./entropy/probabilistic";
 import {
@@ -35,11 +31,14 @@ import {
 } from "./veil_core.js";
 import * as normalize from "./normalize";
 import { initializeWasm } from "./wasm-loader";
-import { scoreFingerprint, bayesianCombine, calculateEntropy, type EntropySource } from "./scoring";
+import { scoreFingerprint, calculateEntropy, type EntropySource } from "./scoring";
+import { getGPUHash, runGPUBenchmark } from "./gpu";
+import { getCPUHash, runCPUBenchmark } from "./cpu";
+import { seededRng } from "./seeded-rng";
 
 export async function getFingerprint(
   options?: FingerprintOptions,
-): Promise<string> {
+): Promise<string | FingerprintResponse> {
   await initializeWasm();
 
   const opts = {
@@ -80,10 +79,12 @@ export async function getFingerprint(
     sources.push({ name: "screen", value, entropy: calculateEntropy(value) });
   }
 
-  sources.push({ name: "distribution", value: await getDistributionEntropy(), entropy: 0 });
+  const baseSeed = sources.map(s => s.value).join("|");
+  
+  sources.push({ name: "distribution", value: await getDistributionEntropy(baseSeed), entropy: 0 });
   sources.push({ name: "complexity", value: await getComplexityEntropy(), entropy: 0 });
-  sources.push({ name: "spectral", value: await getSpectralEntropy(), entropy: 0 });
-  sources.push({ name: "approximate", value: await getApproximateEntropy(), entropy: 0 });
+  sources.push({ name: "spectral", value: await getSpectralEntropy(baseSeed), entropy: 0 });
+  sources.push({ name: "approximate", value: await getApproximateEntropy(baseSeed), entropy: 0 });
   sources.push({ name: "os", value: await getOSEntropy(), entropy: 0 });
   sources.push({ name: "language", value: await getLanguageEntropy(), entropy: 0 });
   sources.push({ name: "timezone", value: await getTimezoneEntropy(), entropy: 0 });
@@ -95,11 +96,7 @@ export async function getFingerprint(
   sources.push({ name: "adblock", value: await getAdblockEntropy(), entropy: 0 });
   sources.push({ name: "webFeatures", value: await getWebFeaturesEntropy(), entropy: 0 });
   sources.push({ name: "preferences", value: await getPreferencesEntropy(), entropy: 0 });
-  sources.push({ name: "connection", value: await getConnectionEntropy(), entropy: 0 });
-  sources.push({ name: "audio", value: await getAudioEntropy(), entropy: 0 });
-  sources.push({ name: "battery", value: await getBatteryEntropy(), entropy: 0 });
   sources.push({ name: "permissions", value: await getPermissionsEntropy(), entropy: 0 });
-  sources.push({ name: "performance", value: await getPerformanceEntropy(), entropy: 0 });
   sources.push({ name: "statistical", value: await getStatisticalEntropy(), entropy: 0 });
   sources.push({ name: "probabilistic", value: await getProbabilisticEntropy(), entropy: 0 });
 
@@ -110,7 +107,6 @@ export async function getFingerprint(
   }
 
   const score = scoreFingerprint(sources);
-  const weights = bayesianCombine(sources);
 
   const data = sources.map(s => s.value);
 
@@ -121,12 +117,7 @@ export async function getFingerprint(
   const fnv = fnv_hash(dataStr);
 
   const mathMetrics = `${shannon}|${kolmogorov}|${murmur}|${fnv}`;
-  const confidence = Math.round(score.confidence * 1000);
-  const uniqueness = Math.round(score.uniqueness * 10000);
-  const divergence = Math.round(score.divergence * 10000);
-  
-  const metrics = `${mathMetrics}|conf:${confidence}|uniq:${uniqueness}|div:${divergence}`;
-  const combined = dataStr + "|" + metrics;
+  const combined = dataStr + "|" + mathMetrics;
 
   const algorithm = opts.hash === "sha512" ? "SHA-512" : "SHA-256";
   const hash = await crypto.subtle.digest(
@@ -134,11 +125,74 @@ export async function getFingerprint(
     new TextEncoder().encode(combined),
   );
 
-  const fingerprint = Array.from(new Uint8Array(hash))
+  let fingerprint = Array.from(new Uint8Array(hash))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
+
+  if (opts.gpuBenchmark) {
+    const gpuHash = await getGPUHash();
+    fingerprint = Array.from(new Uint8Array(
+      await crypto.subtle.digest("SHA-256", new TextEncoder().encode(fingerprint + gpuHash))
+    ))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+  }
+
+  if (opts.cpuBenchmark) {
+    const cpuHash = await getCPUHash();
+    fingerprint = Array.from(new Uint8Array(
+      await crypto.subtle.digest("SHA-256", new TextEncoder().encode(fingerprint + cpuHash))
+    ))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+  }
+
+  if (opts.detailed) {
+    const os = await getOSVersionEntropy();
+    const lang = await getLanguageEntropy();
+    const tz = await getTimezoneEntropy();
+    const hw = await getHardwareEntropy();
+    const sr = await getScreenInfoEntropy();
+    const ua = await getUserAgentEntropy();
+    const browser = await getBrowserEntropy();
+
+    const sourceMetrics: SourceMetric[] = sources.map(s => ({
+      source: s.name,
+      value: s.value,
+      entropy: s.entropy,
+      confidence: score.likelihood > 0 ? Math.min(s.entropy / score.likelihood, 1) : 0,
+    }));
+
+    const response: FingerprintResponse = {
+      hash: fingerprint,
+      uniqueness: score.uniqueness,
+      confidence: score.confidence,
+      sources: sourceMetrics,
+      system: {
+        os,
+        language: lang.split("|")[0],
+        timezone: tz.split("|")[0],
+        hardware: {
+          cores: navigator.hardwareConcurrency || 0,
+          memory: (navigator as any).deviceMemory || 0,
+        },
+      },
+      display: {
+        resolution: `${screen.width}x${screen.height}`,
+        colorDepth: screen.colorDepth,
+        devicePixelRatio: window.devicePixelRatio,
+      },
+      browser: {
+        userAgent: navigator.userAgent,
+        vendor: navigator.vendor,
+        cookieEnabled: navigator.cookieEnabled,
+      },
+    };
+
+    return response;
+  }
 
   return fingerprint;
 }
 
-export type { FingerprintOptions } from "./types";
+export type { FingerprintOptions, FingerprintResponse } from "./types";

@@ -1,4 +1,4 @@
-import { calculateMean, calculateStdDev, chiSquareGoodnessOfFit, hellingerDistance } from "./probability";
+import { calculateMean, hellingerDistance } from "./probability";
 
 export interface EntropySource {
   name: string;

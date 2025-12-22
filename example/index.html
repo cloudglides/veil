@@ -6,42 +6,221 @@
     <style>
       body {
         font-family: monospace;
-        max-width: 800px;
-        margin: 50px auto;
+        max-width: 1000px;
+        margin: 30px auto;
         padding: 20px;
+        background: #fafafa;
       }
-      #result {
-        background: #f0f0f0;
-        padding: 20px;
-        border-radius: 8px;
-        word-break: break-all;
-        margin-top: 20px;
+      h1 {
+        color: #333;
+      }
+      .controls {
+        display: flex;
+        gap: 10px;
+        margin: 20px 0;
+        flex-wrap: wrap;
       }
       button {
-        padding: 10px 20px;
-        font-size: 16px;
+        padding: 10px 16px;
+        font-size: 14px;
         cursor: pointer;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        transition: background 0.2s;
+      }
+      button:hover {
+        background: #0056b3;
+      }
+      button:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+      }
+      .checkbox-group {
+        display: flex;
+        gap: 15px;
+        margin: 15px 0;
+      }
+      .checkbox-group label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+      }
+      #result {
+        background: white;
+        padding: 20px;
+        border-radius: 4px;
+        margin-top: 20px;
+        border: 1px solid #ddd;
+        word-break: break-all;
+        max-height: 600px;
+        overflow-y: auto;
+      }
+      .loading {
+        color: #666;
+      }
+      .error {
+        color: #d32f2f;
+      }
+      .success {
+        color: #388e3c;
+      }
+      .info {
+        background: #e3f2fd;
+        padding: 10px;
+        border-radius: 4px;
+        margin: 10px 0;
+        border-left: 4px solid #2196f3;
+      }
+      pre {
+        background: #f5f5f5;
+        padding: 12px;
+        border-radius: 4px;
+        overflow-x: auto;
+        font-size: 12px;
+        line-height: 1.4;
       }
     </style>
   </head>
   <body>
-    <h1>Veil Browser Fingerprint</h1>
-    <button onclick="generateFingerprint()">Generate Fingerprint</button>
-    <div id="result">Click button to generate...</div>
+    <h1>Veil Browser Fingerprinting</h1>
+    
+    <div class="info">
+      Generates a unique browser fingerprint using system, display, and performance metrics.
+    </div>
+
+    <div class="checkbox-group">
+      <label>
+        <input type="checkbox" id="detailedCheckbox" checked />
+        Detailed output (JSON)
+      </label>
+      <label>
+        <input type="checkbox" id="cpuCheckbox" />
+        CPU benchmark
+      </label>
+      <label>
+        <input type="checkbox" id="gpuCheckbox" />
+        GPU benchmark
+      </label>
+    </div>
+
+    <div class="controls">
+      <button onclick="generateFingerprint()">Generate</button>
+      <button onclick="clearResult()">Clear</button>
+      <button onclick="copyToClipboard()">Copy Result</button>
+    </div>
+
+    <div id="result">Click "Generate" to start...</div>
 
     <script type="module">
       import { getFingerprint } from "../dist/index.js";
 
       window.generateFingerprint = async () => {
         const result = document.getElementById("result");
-        result.textContent = "Generating...";
+        const detailed = document.getElementById("detailedCheckbox").checked;
+        const cpuBenchmark = document.getElementById("cpuCheckbox").checked;
+        const gpuBenchmark = document.getElementById("gpuCheckbox").checked;
+
+        result.innerHTML = '<div class="loading">Generating fingerprint...</div>';
+        console.log("Starting fingerprint generation");
+        console.log("Options:", { detailed, cpuBenchmark, gpuBenchmark });
+
         try {
-          const fp = await getFingerprint();
-          result.textContent = `Fingerprint: ${fp}`;
+          const startTime = performance.now();
+
+          if (cpuBenchmark) {
+            console.log("Running CPU benchmark...");
+          }
+          if (gpuBenchmark) {
+            console.log("Running GPU benchmark...");
+          }
+
+          const fp = await getFingerprint({
+            hash: "sha256",
+            detailed,
+            cpuBenchmark,
+            gpuBenchmark,
+          });
+
+          const endTime = performance.now();
+          const duration = (endTime - startTime).toFixed(2);
+
+          console.log("Fingerprint generated in " + duration + "ms");
+
+          if (typeof fp === "string") {
+            console.log("Hash:", fp);
+            result.innerHTML = `
+              <div class="success">✓ Fingerprint generated</div>
+              <div style="margin-top: 10px;">
+                <strong>Hash:</strong><br/>
+                <pre>${fp}</pre>
+                <small>Generated in ${duration}ms</small>
+              </div>
+            `;
+          } else {
+            console.log("Detailed fingerprint:", fp);
+            result.innerHTML = `
+              <div class="success">✓ Fingerprint generated</div>
+              <div style="margin-top: 15px;">
+                <strong>Hash:</strong><br/>
+                <pre>${fp.hash}</pre>
+                
+                <strong>Metrics:</strong><br/>
+                <pre>Uniqueness: ${(fp.uniqueness * 100).toFixed(2)}%
+Confidence: ${(fp.confidence * 100).toFixed(2)}%</pre>
+
+                <strong>System:</strong><br/>
+                <pre>OS: ${fp.system.os}
+Language: ${fp.system.language}
+Timezone: ${fp.system.timezone}
+Cores: ${fp.system.hardware.cores}
+Memory: ${fp.system.hardware.memory}GB</pre>
+
+                <strong>Display:</strong><br/>
+                <pre>Resolution: ${fp.display.resolution}
+Color Depth: ${fp.display.colorDepth}
+Pixel Ratio: ${fp.display.devicePixelRatio}</pre>
+
+                <strong>Browser:</strong><br/>
+                <pre>Vendor: ${fp.browser.vendor}
+Cookies: ${fp.browser.cookieEnabled ? "enabled" : "disabled"}</pre>
+
+                <strong>Entropy Sources (${fp.sources.length}):</strong><br/>
+                <pre>${fp.sources
+                  .map(
+                    (s) =>
+                      `${s.source}: H=${s.entropy.toFixed(3)}, C=${(s.confidence * 100).toFixed(1)}%`,
+                  )
+                  .join("\n")}</pre>
+              </div>
+            `;
+          }
         } catch (e) {
-          result.textContent = `Error: ${e.message}`;
+          console.error("Error:", e);
+          result.innerHTML = `
+            <div class="error">Error generating fingerprint</div>
+            <pre>${e.message}\n\n${e.stack}</pre>
+          `;
         }
       };
+
+      window.clearResult = () => {
+        document.getElementById("result").textContent = "Cleared";
+        console.log("Result cleared");
+      };
+
+      window.copyToClipboard = () => {
+        const result = document.getElementById("result");
+        const text = result.innerText;
+        navigator.clipboard.writeText(text).then(() => {
+          console.log("Copied to clipboard");
+          alert("Copied to clipboard!");
+        });
+      };
+
+      console.log("Veil fingerprinting library loaded");
     </script>
   </body>
 </html>

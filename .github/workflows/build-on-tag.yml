@@ -39,6 +39,11 @@ jobs:
       - name: Build
         run: pnpm run build
 
+      - name: Publish to npm
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
       - name: Get commit history
         id: commits
         run: |
@@ -61,3 +66,10 @@ jobs:
           git add -A
           git commit -m "${{ github.ref_name }}" -m "${{ steps.commits.outputs.commit_log }}" || true
           git push
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          body: ${{ steps.commits.outputs.commit_log }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

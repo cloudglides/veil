@@ -1,7 +1,7 @@
 {
-  "name": "veil",
-  "version": "0.1.0",
-  "description": "Deterministic browser fingerprinting library",
+  "name": "@cloudglides/veil",
+  "version": "1.0.0",
+  "description": "Math-based deterministic browser fingerprinting library",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": "./dist/index.js",
