@@ -36,6 +36,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Build WASM
+        run: pnpm run build:wasm
+
       - name: Build
         run: pnpm run build
 
