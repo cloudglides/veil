@@ -23,6 +23,11 @@ jobs:
           node-version: '20'
           cache: 'pnpm'
 
+      - uses: rustwasm/setup-toolchain@v1
+
+      - name: Install wasm-pack
+        run: curl https://rustwasm.org/wasm-pack/installer/init.sh -sSf | sh
+
       - name: Extract version from tag
         id: version
         run: |
