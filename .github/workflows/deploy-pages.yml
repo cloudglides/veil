@@ -39,6 +39,9 @@ jobs:
       - name: Build
         run: pnpm run build
 
+      - name: Copy dist to example
+        run: cp -r dist/* example/
+
       - name: Setup Pages
         uses: actions/configure-pages@v3
 
