@@ -35,6 +35,7 @@ import {
 } from "./veil_core.js";
 import * as normalize from "./normalize";
 import { initializeWasm } from "./wasm-loader";
+import { scoreFingerprint, bayesianCombine, calculateEntropy, type EntropySource } from "./scoring";
 
 export async function getFingerprint(
   options?: FingerprintOptions,
@@ -47,54 +48,71 @@ export async function getFingerprint(
     ...options,
   };
 
-  const data: string[] = [];
+  const sources: EntropySource[] = [];
 
   if (opts.entropy.userAgent !== false) {
-    data.push(await getUserAgentEntropy());
+    const value = await getUserAgentEntropy();
+    sources.push({ name: "userAgent", value, entropy: calculateEntropy(value) });
   }
 
   if (opts.entropy.canvas !== false) {
-    data.push(await getCanvasEntropy());
+    const value = await getCanvasEntropy();
+    sources.push({ name: "canvas", value, entropy: calculateEntropy(value) });
   }
 
   if (opts.entropy.webgl !== false) {
-    data.push(await getWebGLEntropy());
+    const value = await getWebGLEntropy();
+    sources.push({ name: "webgl", value, entropy: calculateEntropy(value) });
   }
 
   if (opts.entropy.fonts !== false) {
-    data.push(await getFontsEntropy());
+    const value = await getFontsEntropy();
+    sources.push({ name: "fonts", value, entropy: calculateEntropy(value) });
   }
 
   if (opts.entropy.storage !== false) {
-    data.push(await getStorageEntropy());
+    const value = await getStorageEntropy();
+    sources.push({ name: "storage", value, entropy: calculateEntropy(value) });
   }
 
   if (opts.entropy.screen !== false) {
-    data.push(await getScreenEntropy());
+    const value = await getScreenEntropy();
+    sources.push({ name: "screen", value, entropy: calculateEntropy(value) });
   }
 
-  data.push(await getDistributionEntropy());
-  data.push(await getComplexityEntropy());
-  data.push(await getSpectralEntropy());
-  data.push(await getApproximateEntropy());
-  data.push(await getOSEntropy());
-  data.push(await getLanguageEntropy());
-  data.push(await getTimezoneEntropy());
-  data.push(await getHardwareEntropy());
-  data.push(await getPluginsEntropy());
-  data.push(await getBrowserEntropy());
-  data.push(await getOSVersionEntropy());
-  data.push(await getScreenInfoEntropy());
-  data.push(await getAdblockEntropy());
-  data.push(await getWebFeaturesEntropy());
-  data.push(await getPreferencesEntropy());
-  data.push(await getConnectionEntropy());
-  data.push(await getAudioEntropy());
-  data.push(await getBatteryEntropy());
-  data.push(await getPermissionsEntropy());
-  data.push(await getPerformanceEntropy());
-  data.push(await getStatisticalEntropy());
-  data.push(await getProbabilisticEntropy());
+  sources.push({ name: "distribution", value: await getDistributionEntropy(), entropy: 0 });
+  sources.push({ name: "complexity", value: await getComplexityEntropy(), entropy: 0 });
+  sources.push({ name: "spectral", value: await getSpectralEntropy(), entropy: 0 });
+  sources.push({ name: "approximate", value: await getApproximateEntropy(), entropy: 0 });
+  sources.push({ name: "os", value: await getOSEntropy(), entropy: 0 });
+  sources.push({ name: "language", value: await getLanguageEntropy(), entropy: 0 });
+  sources.push({ name: "timezone", value: await getTimezoneEntropy(), entropy: 0 });
+  sources.push({ name: "hardware", value: await getHardwareEntropy(), entropy: 0 });
+  sources.push({ name: "plugins", value: await getPluginsEntropy(), entropy: 0 });
+  sources.push({ name: "browser", value: await getBrowserEntropy(), entropy: 0 });
+  sources.push({ name: "osVersion", value: await getOSVersionEntropy(), entropy: 0 });
+  sources.push({ name: "screenInfo", value: await getScreenInfoEntropy(), entropy: 0 });
+  sources.push({ name: "adblock", value: await getAdblockEntropy(), entropy: 0 });
+  sources.push({ name: "webFeatures", value: await getWebFeaturesEntropy(), entropy: 0 });
+  sources.push({ name: "preferences", value: await getPreferencesEntropy(), entropy: 0 });
+  sources.push({ name: "connection", value: await getConnectionEntropy(), entropy: 0 });
+  sources.push({ name: "audio", value: await getAudioEntropy(), entropy: 0 });
+  sources.push({ name: "battery", value: await getBatteryEntropy(), entropy: 0 });
+  sources.push({ name: "permissions", value: await getPermissionsEntropy(), entropy: 0 });
+  sources.push({ name: "performance", value: await getPerformanceEntropy(), entropy: 0 });
+  sources.push({ name: "statistical", value: await getStatisticalEntropy(), entropy: 0 });
+  sources.push({ name: "probabilistic", value: await getProbabilisticEntropy(), entropy: 0 });
+
+  for (const source of sources) {
+    if (source.entropy === 0) {
+      source.entropy = calculateEntropy(source.value);
+    }
+  }
+
+  const score = scoreFingerprint(sources);
+  const weights = bayesianCombine(sources);
+
+  const data = sources.map(s => s.value);
 
   const dataStr = data.join("|");
   const shannon = shannon_entropy(dataStr);
@@ -103,7 +121,12 @@ export async function getFingerprint(
   const fnv = fnv_hash(dataStr);
 
   const mathMetrics = `${shannon}|${kolmogorov}|${murmur}|${fnv}`;
-  const combined = dataStr + "|" + mathMetrics;
+  const confidence = Math.round(score.confidence * 1000);
+  const uniqueness = Math.round(score.uniqueness * 10000);
+  const divergence = Math.round(score.divergence * 10000);
+  
+  const metrics = `${mathMetrics}|conf:${confidence}|uniq:${uniqueness}|div:${divergence}`;
+  const combined = dataStr + "|" + metrics;
 
   const algorithm = opts.hash === "sha512" ? "SHA-512" : "SHA-256";
   const hash = await crypto.subtle.digest(
@@ -111,9 +134,11 @@ export async function getFingerprint(
     new TextEncoder().encode(combined),
   );
 
-  return Array.from(new Uint8Array(hash))
+  const fingerprint = Array.from(new Uint8Array(hash))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
+
+  return fingerprint;
 }
 
 export type { FingerprintOptions } from "./types";
