@@ -34,7 +34,7 @@ jobs:
           pnpm exec jq '.version = "${{ steps.version.outputs.version }}"' package.json > package.json.tmp && mv package.json.tmp package.json
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install
 
       - name: Build
         run: pnpm run build
