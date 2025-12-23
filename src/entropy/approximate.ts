@@ -1,4 +1,4 @@
-import { approx_entropy } from "./veil_core.js";
+import { approx_entropy } from "../../veil-core/pkg/veil_core.js";
 import { seededRng } from "../seeded-rng";
 
 export async function getApproximateEntropy(seed: string): Promise<string> {

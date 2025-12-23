@@ -3,6 +3,7 @@ use std::usize;
 use wasm_bindgen::prelude::*;
 
 mod entropy;
+mod similarity;
 
 const MURMUR_SEED: u32 = 0x811c9dc5;
 const FNV_PRIME: u32 = 16777619;
@@ -88,3 +89,5 @@ pub fn approx_entropy(samples: &[f64], m: usize) -> f64 {
 pub fn sample_ent(samples: &[f64], m: usize, r: f64) -> f64 {
     entropy::sample_entropy(samples, m, r)
 }
+
+pub use similarity::{levenshtein_distance, similarity_score, cosine_similarity};

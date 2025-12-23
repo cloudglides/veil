@@ -10,7 +10,7 @@ export default defineConfig({
   clean: true,
   shims: true,
   outDir: "dist",
-  external: ["./veil_core.js"],
+  external: [],
   onSuccess: async () => {
     const srcWasmDir = resolve("veil-core/pkg");
     const distDir = resolve("dist");

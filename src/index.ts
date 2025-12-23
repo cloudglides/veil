@@ -23,18 +23,37 @@ import { getPreferencesEntropy } from "./entropy/preferences";
 import { getPermissionsEntropy } from "./entropy/permissions";
 import { getStatisticalEntropy } from "./entropy/statistical";
 import { getProbabilisticEntropy } from "./entropy/probabilistic";
-import {
-  murmur_hash,
-  fnv_hash,
-  shannon_entropy,
-  kolmogorov_complexity,
-} from "./veil_core.js";
+function levenshteinDistance(s1: string, s2: string): number {
+  const len1 = s1.length;
+  const len2 = s2.length;
+  const matrix: number[][] = Array(len1 + 1).fill(null).map(() => Array(len2 + 1).fill(0));
+
+  for (let i = 0; i <= len1; i++) matrix[i][0] = i;
+  for (let j = 0; j <= len2; j++) matrix[0][j] = j;
+
+  for (let i = 1; i <= len1; i++) {
+    for (let j = 1; j <= len2; j++) {
+      const cost = s1[i - 1] === s2[j - 1] ? 0 : 1;
+      matrix[i][j] = Math.min(
+        matrix[i - 1][j] + 1,
+        matrix[i][j - 1] + 1,
+        matrix[i - 1][j - 1] + cost,
+      );
+    }
+  }
+  return matrix[len1][len2];
+}
+
+function similarityScore(s1: string, s2: string): number {
+  const distance = levenshteinDistance(s1, s2);
+  const maxLen = Math.max(s1.length, s2.length);
+  return maxLen === 0 ? 1 : 1 - distance / maxLen;
+}
+
 import * as normalize from "./normalize";
 import { initializeWasm } from "./wasm-loader";
 import { scoreFingerprint, calculateEntropy, type EntropySource } from "./scoring";
-import { getGPUHash, runGPUBenchmark } from "./gpu";
-import { getCPUHash, runCPUBenchmark } from "./cpu";
-import { seededRng } from "./seeded-rng";
+import { analyzeTamper } from "./tamper";
 
 export async function getFingerprint(
   options?: FingerprintOptions,
@@ -107,17 +126,10 @@ export async function getFingerprint(
   }
 
   const score = scoreFingerprint(sources);
+  const tamper = analyzeTamper(sources);
 
   const data = sources.map(s => s.value);
-
-  const dataStr = data.join("|");
-  const shannon = shannon_entropy(dataStr);
-  const kolmogorov = kolmogorov_complexity(dataStr);
-  const murmur = murmur_hash(dataStr);
-  const fnv = fnv_hash(dataStr);
-
-  const mathMetrics = `${shannon}|${kolmogorov}|${murmur}|${fnv}`;
-  const combined = dataStr + "|" + mathMetrics;
+  const combined = data.join("|");
 
   const algorithm = opts.hash === "sha512" ? "SHA-512" : "SHA-256";
   const hash = await crypto.subtle.digest(
@@ -128,24 +140,6 @@ export async function getFingerprint(
   let fingerprint = Array.from(new Uint8Array(hash))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
-
-  if (opts.gpuBenchmark) {
-    const gpuHash = await getGPUHash();
-    fingerprint = Array.from(new Uint8Array(
-      await crypto.subtle.digest("SHA-256", new TextEncoder().encode(fingerprint + gpuHash))
-    ))
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
-  }
-
-  if (opts.cpuBenchmark) {
-    const cpuHash = await getCPUHash();
-    fingerprint = Array.from(new Uint8Array(
-      await crypto.subtle.digest("SHA-256", new TextEncoder().encode(fingerprint + cpuHash))
-    ))
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
-  }
 
   if (opts.detailed) {
     const os = await getOSVersionEntropy();
@@ -167,6 +161,8 @@ export async function getFingerprint(
       hash: fingerprint,
       uniqueness: score.uniqueness,
       confidence: score.confidence,
+      tampering_risk: tamper.tampering_risk,
+      anomalies: tamper.anomalies,
       sources: sourceMetrics,
       system: {
         os,
@@ -193,6 +189,38 @@ export async function getFingerprint(
   }
 
   return fingerprint;
+}
+
+export async function compareFingerpints(
+  fp1: string | FingerprintResponse,
+  fp2: string | FingerprintResponse,
+): Promise<{ similarity: number; match: boolean }> {
+  const hash1 = typeof fp1 === "string" ? fp1 : fp1.hash;
+  const hash2 = typeof fp2 === "string" ? fp2 : fp2.hash;
+
+  const sim = similarityScore(hash1, hash2);
+  const match = sim > 0.95;
+
+  return { similarity: sim, match };
+}
+
+export async function matchProbability(
+  storedFingerprints: (string | FingerprintResponse)[],
+  currentFingerprint: string | FingerprintResponse,
+): Promise<{ bestMatch: number; confidence: number }> {
+  const currentHash = typeof currentFingerprint === "string" ? currentFingerprint : currentFingerprint.hash;
+  
+  let bestMatch = 0;
+  for (const stored of storedFingerprints) {
+    const storedHash = typeof stored === "string" ? stored : stored.hash;
+    const sim = similarityScore(currentHash, storedHash);
+    if (sim > bestMatch) {
+      bestMatch = sim;
+    }
+  }
+
+  const confidence = Math.min(bestMatch * 1.2, 1.0);
+  return { bestMatch, confidence };
 }
 
 export type { FingerprintOptions, FingerprintResponse } from "./types";

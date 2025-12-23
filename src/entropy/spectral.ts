@@ -1,4 +1,4 @@
-import { spectral } from "./veil_core.js";
+import { spectral } from "../../veil-core/pkg/veil_core.js";
 import { seededRng } from "../seeded-rng";
 
 export async function getSpectralEntropy(seed: string): Promise<string> {

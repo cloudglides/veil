@@ -9,8 +9,6 @@ export interface FingerprintOptions {
   };
   hash?: "sha256" | "sha512";
   detailed?: boolean;
-  gpuBenchmark?: boolean;
-  cpuBenchmark?: boolean;
 }
 
 export interface SourceMetric {
@@ -24,6 +22,8 @@ export interface FingerprintResponse {
   hash: string;
   uniqueness: number;
   confidence: number;
+  tampering_risk: number;
+  anomalies: string[];
   sources: SourceMetric[];
   system: {
     os: string;

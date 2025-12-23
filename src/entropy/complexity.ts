@@ -1,4 +1,4 @@
-import { lz_complexity } from "./veil_core.js";
+import { lz_complexity } from "../../veil-core/pkg/veil_core.js";
 
 export async function getComplexityEntropy(): Promise<string> {
   const ua = navigator.userAgent;

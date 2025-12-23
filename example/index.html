@@ -97,14 +97,6 @@
         <input type="checkbox" id="detailedCheckbox" checked />
         Detailed output (JSON)
       </label>
-      <label>
-        <input type="checkbox" id="cpuCheckbox" />
-        CPU benchmark
-      </label>
-      <label>
-        <input type="checkbox" id="gpuCheckbox" />
-        GPU benchmark
-      </label>
     </div>
 
     <div class="controls">
@@ -121,28 +113,17 @@
       window.generateFingerprint = async () => {
         const result = document.getElementById("result");
         const detailed = document.getElementById("detailedCheckbox").checked;
-        const cpuBenchmark = document.getElementById("cpuCheckbox").checked;
-        const gpuBenchmark = document.getElementById("gpuCheckbox").checked;
 
         result.innerHTML = '<div class="loading">Generating fingerprint...</div>';
         console.log("Starting fingerprint generation");
-        console.log("Options:", { detailed, cpuBenchmark, gpuBenchmark });
+        console.log("Options:", { detailed });
 
         try {
           const startTime = performance.now();
 
-          if (cpuBenchmark) {
-            console.log("Running CPU benchmark...");
-          }
-          if (gpuBenchmark) {
-            console.log("Running GPU benchmark...");
-          }
-
           const fp = await getFingerprint({
             hash: "sha256",
             detailed,
-            cpuBenchmark,
-            gpuBenchmark,
           });
 
           const endTime = performance.now();
@@ -170,7 +151,13 @@
                 
                 <strong>Metrics:</strong><br/>
                 <pre>Uniqueness: ${(fp.uniqueness * 100).toFixed(2)}%
-Confidence: ${(fp.confidence * 100).toFixed(2)}%</pre>
+Confidence: ${(fp.confidence * 100).toFixed(2)}%
+Tampering Risk: ${(fp.tampering_risk * 100).toFixed(2)}%</pre>
+
+                ${fp.anomalies.length > 0 ? `
+                <strong>Anomalies Detected:</strong><br/>
+                <pre>${fp.anomalies.join("\n")}</pre>
+                ` : ""}
 
                 <strong>System:</strong><br/>
                 <pre>OS: ${fp.system.os}

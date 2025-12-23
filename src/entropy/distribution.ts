@@ -1,4 +1,4 @@
-import { ks_test } from "./veil_core.js";
+import { ks_test } from "../../veil-core/pkg/veil_core.js";
 import { seededRng } from "../seeded-rng";
 
 export async function getDistributionEntropy(seed: string): Promise<string> {
