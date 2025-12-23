@@ -1,7 +1,7 @@
 export async function getStatisticalEntropy(): Promise<string> {
   const ua = navigator.userAgent;
   const freq: Record<string, number> = {};
-  
+
   for (const char of ua) {
     freq[char] = (freq[char] || 0) + 1;
   }

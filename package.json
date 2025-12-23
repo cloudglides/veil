@@ -9,12 +9,16 @@
   "publishConfig": {
     "access": "public"
   },
+  "workspaces": [
+    "example"
+  ],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
     "build:wasm": "wasm-pack build veil-core --target web",
     "test": "vitest",
-    "test:ui": "vitest --ui"
+    "test:ui": "vitest --ui",
+    "example:dev": "pnpm -C example dev"
   },
   "devDependencies": {
     "@vitest/ui": "^1.0.0",

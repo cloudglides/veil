@@ -50,7 +50,6 @@ function similarityScore(s1: string, s2: string): number {
   return maxLen === 0 ? 1 : 1 - distance / maxLen;
 }
 
-import * as normalize from "./normalize";
 import { initializeWasm } from "./wasm-loader";
 import { scoreFingerprint, calculateEntropy, type EntropySource } from "./scoring";
 import { analyzeTamper } from "./tamper";
@@ -100,7 +99,7 @@ export async function getFingerprint(
   }
 
   const baseSeed = sources.map(s => s.value).join("|");
-  
+
   sources.push({ name: "distribution", value: await getDistributionEntropy(baseSeed), entropy: 0 });
   sources.push({ name: "complexity", value: await getComplexityEntropy(), entropy: 0 });
   sources.push({ name: "spectral", value: await getSpectralEntropy(baseSeed), entropy: 0 });
@@ -231,7 +230,7 @@ export async function matchProbability(
   currentFingerprint: string | FingerprintResponse,
 ): Promise<{ bestMatch: number; confidence: number }> {
   const currentHash = typeof currentFingerprint === "string" ? currentFingerprint : currentFingerprint.hash;
-  
+
   let bestMatch = 0;
   for (const stored of storedFingerprints) {
     const storedHash = typeof stored === "string" ? stored : stored.hash;

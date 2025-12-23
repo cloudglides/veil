@@ -5,7 +5,7 @@ export function calculateMean(values: number[]): number {
 
 export function hellingerDistance(p: number[], q: number[]): number {
   if (p.length !== q.length) return 0;
-  
+
   const sum = p.reduce((s, pi, i) => s + Math.pow(Math.sqrt(pi) - Math.sqrt(q[i]), 2), 0);
   return Math.sqrt(sum / 2);
 }

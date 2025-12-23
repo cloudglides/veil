@@ -1,6 +1,6 @@
 export async function getProbabilisticEntropy(): Promise<string> {
   const metrics = [];
-  
+
   const screen_values = [screen.width, screen.height, screen.colorDepth];
   const hw_values = [navigator.hardwareConcurrency || 1, (navigator as any).deviceMemory || 4];
   const all_values = [...screen_values, ...hw_values];
