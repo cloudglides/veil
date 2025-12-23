@@ -18,12 +18,14 @@ export interface SourceMetric {
   confidence: number;
 }
 
+import type { Anomaly } from "./tamper";
+
 export interface FingerprintResponse {
   hash: string;
   uniqueness: number;
   confidence: number;
   tampering_risk: number;
-  anomalies: string[];
+  anomalies: Anomaly[];
   sources: SourceMetric[];
   system: {
     os: string;

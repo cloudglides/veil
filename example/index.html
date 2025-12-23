@@ -155,8 +155,10 @@ Confidence: ${(fp.confidence * 100).toFixed(2)}%
 Tampering Risk: ${(fp.tampering_risk * 100).toFixed(2)}%</pre>
 
                 ${fp.anomalies.length > 0 ? `
-                <strong>Anomalies Detected:</strong><br/>
-                <pre>${fp.anomalies.join("\n")}</pre>
+                <strong>Anomalies Detected (${fp.anomalies.length}):</strong><br/>
+                <pre>${fp.anomalies.map(a => 
+                  `[${a.severity.toUpperCase()}] ${a.id} (${a.category})\n${a.message}\nRisk: ${(a.riskContribution * 100).toFixed(0)}%\n`
+                ).join("\n")}</pre>
                 ` : ""}
 
                 <strong>System:</strong><br/>

@@ -22,7 +22,7 @@ pnpm add @cloudglides/veil
 ## Quick Start
 
 ```javascript
-import { getFingerprint } from '@cloudglides/veil';
+import { getFingerprint } from "@cloudglides/veil";
 
 // Simple hash
 const hash = await getFingerprint();
@@ -30,12 +30,12 @@ console.log(hash); // e.g., "a3f5d8c..."
 
 // Detailed analysis
 const fingerprint = await getFingerprint({ detailed: true });
-console.log(fingerprint.hash);           // fingerprint hash
-console.log(fingerprint.uniqueness);     // 0-1 uniqueness score
-console.log(fingerprint.confidence);     // 0-1 confidence score
+console.log(fingerprint.hash); // fingerprint hash
+console.log(fingerprint.uniqueness); // 0-1 uniqueness score
+console.log(fingerprint.confidence); // 0-1 confidence score
 console.log(fingerprint.tampering_risk); // 0-1 tampering risk
-console.log(fingerprint.anomalies);      // array of detected anomalies
-console.log(fingerprint.sources);        // entropy sources and their contributions
+console.log(fingerprint.anomalies); // array of detected anomalies
+console.log(fingerprint.sources); // entropy sources and their contributions
 ```
 
 ## API Reference
@@ -45,22 +45,24 @@ console.log(fingerprint.sources);        // entropy sources and their contributi
 Generates a browser fingerprint.
 
 **Options:**
+
 ```typescript
 interface FingerprintOptions {
   entropy?: {
-    userAgent?: boolean;      // default: true
-    canvas?: boolean;         // default: true
-    webgl?: boolean;          // default: true
-    fonts?: boolean;          // default: true
-    storage?: boolean;        // default: true
-    screen?: boolean;         // default: true
+    userAgent?: boolean; // default: true
+    canvas?: boolean; // default: true
+    webgl?: boolean; // default: true
+    fonts?: boolean; // default: true
+    storage?: boolean; // default: true
+    screen?: boolean; // default: true
   };
   hash?: "sha256" | "sha512"; // default: "sha256"
-  detailed?: boolean;         // return full response (default: false)
+  detailed?: boolean; // return full response (default: false)
 }
 ```
 
 **Returns:**
+
 - `string` - 64 or 128 character hash (if `detailed: false`)
 - `FingerprintResponse` - Full analysis object (if `detailed: true`)
 
@@ -74,7 +76,7 @@ const fp2 = await getFingerprint();
 const { similarity, match } = await compareFingerpints(fp1, fp2);
 
 console.log(similarity); // 0-1, higher = more similar
-console.log(match);      // true if similarity > 0.95
+console.log(match); // true if similarity > 0.95
 ```
 
 ### `matchProbability(stored, current): Promise<{ bestMatch: number; confidence: number }>`
@@ -86,7 +88,7 @@ const currentFp = await getFingerprint();
 const storedFps = [fp1, fp2, fp3];
 
 const { bestMatch, confidence } = await matchProbability(storedFps, currentFp);
-console.log(bestMatch);  // 0-1 highest similarity
+console.log(bestMatch); // 0-1 highest similarity
 console.log(confidence); // probability estimate
 ```
 
@@ -121,11 +123,12 @@ Each fingerprint includes a `tampering_risk` score (0-1) and list of detected `a
 const fp = await getFingerprint({ detailed: true });
 
 if (fp.tampering_risk > 0.5) {
-  console.warn('High tampering risk detected:', fp.anomalies);
+  console.warn("High tampering risk detected:", fp.anomalies);
 }
 ```
 
 **Detected Anomalies:**
+
 - Suspiciously uniform entropy across sources
 - Duplicate values in multiple sources
 - Missing critical entropy sources
@@ -152,6 +155,7 @@ python3 -m http.server 8000
 5. **Output** - Returns fingerprint hash with optional detailed metrics
 
 The library uses WASM (via Rust) for computationally intensive operations:
+
 - Kolmogorov-Smirnov test (distribution analysis)
 - Lempel-Ziv complexity
 - Spectral entropy
