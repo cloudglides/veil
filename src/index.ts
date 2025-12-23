@@ -54,6 +54,7 @@ import * as normalize from "./normalize";
 import { initializeWasm } from "./wasm-loader";
 import { scoreFingerprint, calculateEntropy, type EntropySource } from "./scoring";
 import { analyzeTamper } from "./tamper";
+import { getSourceStability, assessFingerprint, generateDeviceIdentity } from "./stability";
 
 export async function getFingerprint(
   options?: FingerprintOptions,
@@ -127,14 +128,22 @@ export async function getFingerprint(
 
   const score = scoreFingerprint(sources);
   const tamper = analyzeTamper(sources);
+  const stability = getSourceStability(sources);
+  const assessment = assessFingerprint(sources);
+
+  const deviceIdentity = generateDeviceIdentity(sources);
 
   const data = sources.map(s => s.value);
   const combined = data.join("|");
 
+  const coreWeight = "core:" + deviceIdentity.core_hash;
+  const prefsWeight = "prefs:" + deviceIdentity.preferences_hash;
+  const weightedInput = `${coreWeight}|${prefsWeight}|${combined}`;
+
   const algorithm = opts.hash === "sha512" ? "SHA-512" : "SHA-256";
   const hash = await crypto.subtle.digest(
     algorithm,
-    new TextEncoder().encode(combined),
+    new TextEncoder().encode(weightedInput),
   );
 
   let fingerprint = Array.from(new Uint8Array(hash))
@@ -150,19 +159,32 @@ export async function getFingerprint(
     const ua = await getUserAgentEntropy();
     const browser = await getBrowserEntropy();
 
-    const sourceMetrics: SourceMetric[] = sources.map(s => ({
-      source: s.name,
-      value: s.value,
-      entropy: s.entropy,
-      confidence: score.likelihood > 0 ? Math.min(s.entropy / score.likelihood, 1) : 0,
-    }));
+    const sourceMetrics: SourceMetric[] = sources.map(s => {
+      const stab = stability.find(st => st.source === s.name);
+      return {
+        source: s.name,
+        value: s.value,
+        entropy: s.entropy,
+        confidence: score.likelihood > 0 ? Math.min(s.entropy / score.likelihood, 1) : 0,
+        stability: stab?.stability,
+      };
+    });
+
+    const avgStability = stability.length > 0
+      ? stability.reduce((a, b) => a + b.stability, 0) / stability.length
+      : 0;
 
     const response: FingerprintResponse = {
       hash: fingerprint,
       uniqueness: score.uniqueness,
       confidence: score.confidence,
+      stability_score: avgStability,
+      usable: assessment.usable,
+      warnings: assessment.warnings.length > 0 ? assessment.warnings : undefined,
+      entropy_warnings: assessment.entropy_warnings.length > 0 ? assessment.entropy_warnings : undefined,
       tampering_risk: tamper.tampering_risk,
       anomalies: tamper.anomalies,
+      device_identity: deviceIdentity,
       sources: sourceMetrics,
       system: {
         os,

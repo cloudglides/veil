@@ -16,16 +16,23 @@ export interface SourceMetric {
   value: string;
   entropy: number;
   confidence: number;
+  stability?: number;
 }
 
 import type { Anomaly } from "./tamper";
+import type { EntropyWarning, DeviceIdentity } from "./stability";
 
 export interface FingerprintResponse {
   hash: string;
   uniqueness: number;
   confidence: number;
+  stability_score?: number;
+  usable: boolean;
+  warnings?: string[];
+  entropy_warnings?: EntropyWarning[];
   tampering_risk: number;
   anomalies: Anomaly[];
+  device_identity?: DeviceIdentity;
   sources: SourceMetric[];
   system: {
     os: string;
