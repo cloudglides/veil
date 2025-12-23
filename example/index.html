@@ -108,7 +108,11 @@
     <div id="result">Click "Generate" to start...</div>
 
     <script type="module">
-      const { getFingerprint } = await import('../dist/index.js');
+      let distPath = '../dist/index.js';
+      if (window.location.pathname.includes('/veil/')) {
+        distPath = '/veil/dist/index.js';
+      }
+      const { getFingerprint } = await import(distPath);
 
       window.generateFingerprint = async () => {
         const result = document.getElementById("result");
