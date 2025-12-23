@@ -1,4 +1,4 @@
-import { lz_complexity } from "../../veil-core/pkg/veil_core.js";
+import { getWasmModule } from "../wasm-loader";
 
 export async function getComplexityEntropy(): Promise<string> {
   const ua = navigator.userAgent;
@@ -8,6 +8,7 @@ export async function getComplexityEntropy(): Promise<string> {
     bytes[i] = ua.charCodeAt(i) % 256;
   }
 
-  const complexity = lz_complexity(bytes);
+  const wasm = await getWasmModule();
+  const complexity = wasm.lz_complexity(bytes);
   return `lz:${complexity}`;
 }
