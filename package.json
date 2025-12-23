@@ -1,20 +1,28 @@
 {
   "name": "@cloudglides/veil",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Math-based deterministic browser fingerprinting library",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "exports": "./dist/index.js",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
   "type": "module",
   "publishConfig": {
     "access": "public"
   },
+  "files": [
+    "dist"
+  ],
   "workspaces": [
     "example"
   ],
   "scripts": {
     "build": "tsup",
-    "build:all": "pnpm run build:wasm && pnpm run build && pnpm run build:example",
+    "build:all": "node scripts/build.js",
     "build:example": "pnpm -C example build",
     "dev": "tsup --watch",
     "build:wasm": "wasm-pack build veil-core --target web",

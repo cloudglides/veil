@@ -42,8 +42,8 @@ importers:
   example:
     dependencies:
       '@cloudglides/veil':
-        specifier: workspace:*
-        version: link:..
+        specifier: ^1.0.2
+        version: 1.0.2
       react:
         specifier: ^18.2.0
         version: 18.3.1
@@ -148,6 +148,9 @@ packages:
   '@babel/types@7.28.5':
     resolution: {integrity: sha512-qQ5m48eI/MFLQ5PxQj4PFaprjyCTLI37ElWMmNs0K8Lk3dVeOdNpB3ks8jc7yM5CDmVC73eMVk/trk3fgmrUpA==}
     engines: {node: '>=6.9.0'}
+
+  '@cloudglides/veil@1.0.2':
+    resolution: {integrity: sha512-qKQn/2qDqws23sp7edNs7Z2U9/xxJz4AOp4y+lpKsSc+Y0QALy6VbPU9ffz6Ceh3jMaljXbfhugP1xNK0iD07g==}
 
   '@csstools/color-helpers@5.1.0':
     resolution: {integrity: sha512-S11EXWJyy0Mz5SYvRmY8nJYTFFd1LCNV+7cXyAgQtOOuzb4EsgfqDufL+9esx72/eLhsRdGZwaldu/h+E4t4BA==}
@@ -2009,6 +2012,8 @@ snapshots:
     dependencies:
       '@babel/helper-string-parser': 7.27.1
       '@babel/helper-validator-identifier': 7.28.5
+
+  '@cloudglides/veil@1.0.2': {}
 
   '@csstools/color-helpers@5.1.0': {}
 

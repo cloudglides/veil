@@ -6,7 +6,6 @@ async function loadWasmModule() {
 
   const paths = [
     () => import("./veil_core.js"),
-    () => import("../veil-core/pkg/veil_core.js"),
   ];
 
   for (const pathFn of paths) {
@@ -18,7 +17,7 @@ async function loadWasmModule() {
     }
   }
 
-  throw new Error("Failed to load WASM module from any location");
+  throw new Error("Failed to load WASM module");
 }
 
 export async function initializeWasm() {
