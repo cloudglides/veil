@@ -14,6 +14,8 @@
   ],
   "scripts": {
     "build": "tsup",
+    "build:all": "pnpm run build:wasm && pnpm run build && pnpm run build:example",
+    "build:example": "pnpm -C example build",
     "dev": "tsup --watch",
     "build:wasm": "wasm-pack build veil-core --target web",
     "test": "vitest",

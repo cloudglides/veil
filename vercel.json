@@ -1,0 +1,5 @@
+{
+  "buildCommand": "pnpm build:wasm && pnpm build && pnpm -C example build",
+  "outputDirectory": "example/dist",
+  "installCommand": "pnpm install"
+}
