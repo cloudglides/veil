@@ -1,5 +1,0 @@
-{
-  "buildCommand": "pnpm -C example build",
-  "outputDirectory": "example/dist",
-  "installCommand": "pnpm install"
-}
