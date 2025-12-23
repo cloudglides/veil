@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <base href="/veil/" />
+    <!-- base href removed to fix module import paths -->
     <title>Veil Fingerprinting Demo</title>
     <style>
       body {
@@ -108,10 +108,7 @@
     <div id="result">Click "Generate" to start...</div>
 
     <script type="module">
-      const scriptURL = import.meta.url;
-      const currentDir = scriptURL.substring(0, scriptURL.lastIndexOf('/'));
-      const distPath = new URL('../dist/index.js', currentDir).href;
-      const { getFingerprint } = await import(distPath);
+      const { getFingerprint } = await import('../dist/index.js');
 
       window.generateFingerprint = async () => {
         const result = document.getElementById("result");
