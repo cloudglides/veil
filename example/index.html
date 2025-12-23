@@ -108,7 +108,9 @@
     <div id="result">Click "Generate" to start...</div>
 
     <script type="module">
-      import { getFingerprint } from "../dist/index.js";
+      const isGitHubPages = window.location.hostname === 'cloudglides.github.io';
+      const distPath = isGitHubPages ? './dist/index.js' : '../dist/index.js';
+      const { getFingerprint } = await import(distPath);
 
       window.generateFingerprint = async () => {
         const result = document.getElementById("result");
