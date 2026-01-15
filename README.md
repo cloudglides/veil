@@ -158,17 +158,6 @@ if (fp.tampering_risk > 0.5) {
 - Cross-source inconsistencies (e.g., canvas/webgl mismatch)
 - Suspicious placeholder values (null, fake, mock)
 
-## Example
-
-See `/example/index.html` for a working demo with UI controls.
-
-```bash
-# Start local server
-python3 -m http.server 8000
-
-# Visit http://localhost:8000/example/
-```
-
 ## How It Works
 
 1. **Entropy Collection** - Gathers browser characteristics from 25+ sources
@@ -204,7 +193,6 @@ The library uses WASM (via Rust) for computationally intensive operations:
 
 MIT - See LICENSE file
 
-## Contributing
 
 Contributions welcome. Please open an issue or PR on GitHub.
 
