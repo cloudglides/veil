@@ -1,6 +1,29 @@
-# Veil
+<p align="center"><img width="222" height="104" alt="logo" src="https://github.com/user-attachments/assets/4da72eab-7273-4959-bd7f-997366de564f" /></p>
 
-A deterministic browser fingerprinting library with mathematical rigor and tamper detection.
+
+
+
+<h1 align="center">Veil</h1>
+<p align="center">
+  <a href="#installation">Install</a> •
+  <a href="#how-it-works">How it works</a> •
+  <a href="#api-reference">API reference</a> •
+  <a href="#performance">Performance</a>
+</p>
+
+<p align="center">
+  <a href="https://www.npmjs.com/package/@cloudglides/veil">NPM</a> •
+  <a href="https://github.com/cloudglides/veil">GitHub</a> •
+  <a href="#contributing">Contributing</a>
+</p>
+
+<p align="center">
+  A browser fingerprinting library based on <b>static traits</b> and
+  <b>information theory</b>, designed to generate deterministic,
+  reproducible fingerprints without relying on cookies or storage.
+</p>
+
+
 
 ## Features
 
